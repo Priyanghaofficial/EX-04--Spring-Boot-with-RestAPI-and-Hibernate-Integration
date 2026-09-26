@@ -178,55 +178,58 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 ### MovieController.java
 
 ```java
-package com.example.MOVIE;
+package com.example._th;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController
 @RequestMapping("/movies")
 public class MovieController {
 
-    @Autowired
-    private MovieRepository repo;
+    MovieRepository repo;
+
+    MovieController(MovieRepository repo) {
+        this.repo = repo;
+    }
 
     @GetMapping
-    public List<Movie> getAllMovies() {
+    public List<Movie> getAll() {
         return repo.findAll();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Movie> getMovieById(@PathVariable Long id) {
-        return repo.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public Movie getOne(@PathVariable Long id) {
+        return repo.findById(id).orElse(null);
     }
 
     @PostMapping
-    public Movie addMovie(@RequestBody Movie movie) {
+    public Movie add(@RequestBody Movie movie) {
         return repo.save(movie);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Movie> updateMovie(@PathVariable Long id, @RequestBody Movie movieDetails) {
-        return repo.findById(id).map(movie -> {
-            movie.setTitle(movieDetails.getTitle());
-            movie.setGenre(movieDetails.getGenre());
-            movie.setReleaseYear(movieDetails.getReleaseYear());
-            movie.setRating(movieDetails.getRating());
-            return ResponseEntity.ok(repo.save(movie));
-        }).orElse(ResponseEntity.notFound().build());
+    public Movie update(@PathVariable Long id,
+                        @RequestBody Movie m) {
+
+        Movie old = repo.findById(id).orElse(null);
+
+        if (old != null) {
+            old.setTitle(m.getTitle());
+            old.setGenre(m.getGenre());
+            old.setReleaseYear(m.getReleaseYear());
+            old.setRating(m.getRating());
+
+            return repo.save(old);
+        }
+
+        return null;
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Object> deleteMovie(@PathVariable Long id) {
-        return repo.findById(id).map(movie -> {
-            repo.delete(movie);
-            return ResponseEntity.ok().build();
-        }).orElse(ResponseEntity.notFound().build());
+    public String delete(@PathVariable Long id) {
+        repo.deleteById(id);
+        return "Deleted Successfully";
     }
 }
 
